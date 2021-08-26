@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables": {
+    "autoname": "[concat('avdsc', uniqueString(resourceGroup().id))]",
+    "storename": "[tolower(concat('store', uniqueString(resourceGroup().id)))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2020-01-13-preview",
+      "name": "[variables('autoname')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2020-01-13-preview",
+      "name": "[concat(variables('autoname'), '/nx')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', variables('autoname'))]"
+      ],
+      "properties": {
+        "contentLink": {}
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storename')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      },
+      "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "windowsavconfig",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts', variables('storename'))]"
+          ]
+        },
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "linuxavconfig",
+          "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts', variables('storename'))]"
+          ]
+        }
+      ]
+    }
+  ]
+}
